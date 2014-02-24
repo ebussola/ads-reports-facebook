@@ -1,2 +1,2 @@
-facebook-ads-reports
+ads-reports-facebook
 ====================

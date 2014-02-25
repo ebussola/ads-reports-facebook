@@ -8,8 +8,6 @@
 
 namespace ebussola\ads\reports\facebook;
 
-
-use ebussola\ads\reports\facebook\campaignstats\CampaignStats;
 use ebussola\ads\reports\facebook\campaignstats\CampaignStatsReport;
 use ebussola\ads\reports\StatsReport;
 use ebussola\facebook\ads\Ads;
@@ -37,7 +35,7 @@ class Facebook {
      * @param \DateTime $date_start
      * @param \DateTime $date_end
      *
-     * @return StatsReport
+     * @return StatsReport[]
      */
     public function createDailyCampaignStats($campaign_ids, \DateTime $date_start, \DateTime $date_end) {
         $data_columns = $this->getCampaignFields();
@@ -53,7 +51,7 @@ class Facebook {
         foreach ($campaign_stats as &$_campaign_stats) {
             $stats_report = new CampaignStatsReport();
             foreach ($_campaign_stats as $stats_data) {
-                $stats = new CampaignStats($stats_data);
+                $stats = new \ebussola\ads\reports\facebook\campaignstats\CampaignStats($stats_data);
                 $stats->refreshValues();
 
                 $stats_report->addStats($stats);
@@ -63,6 +61,31 @@ class Facebook {
         }
 
         return $campaign_stats;
+    }
+
+    /**
+     * @param string[] $campaign_ids
+     * @param \DateTime $start_date
+     * @param \DateTime $end_date
+     *
+     * @return StatsReport
+     */
+    public function createCampaignStats($campaign_ids, \DateTime $start_date, \DateTime $end_date) {
+        $data_columns = $this->getCampaignFields();
+        $filters = array(
+            ReportStatsHelper::createFilter('campaign_id', 'in', $campaign_ids)
+        );
+
+        $stats = $this->ads->getReportStats($this->account_id, $data_columns, $filters, $start_date, $end_date);
+        $stats_report = new CampaignStatsReport();
+        foreach ($stats as &$_stats) {
+            $campaign_stats = new \ebussola\ads\reports\facebook\campaignstats\CampaignStats($_stats);
+            $campaign_stats->refreshValues();
+
+            $stats_report->addStats($campaign_stats);
+        }
+
+        return $stats_report;
     }
 
     private function getGeneralFields() {

@@ -9,6 +9,7 @@
 namespace ebussola\ads\reports\facebook;
 
 use ebussola\ads\reports\facebook\campaignstats\CampaignStatsReport;
+use ebussola\ads\reports\Reports;
 use ebussola\ads\reports\StatsReport;
 use ebussola\facebook\ads\Ads;
 use ebussola\facebook\ads\ReportStatsHelper;
@@ -38,29 +39,34 @@ class Facebook {
      * @return StatsReport[]
      */
     public function createDailyCampaignStats($campaign_ids, \DateTime $date_start, \DateTime $date_end) {
-        $data_columns = $this->getCampaignFields();
-        $filters = array(
-            ReportStatsHelper::createFilter('campaign_id', 'in', $campaign_ids)
-        );
+        $stats_report = $this->_createDailyCampaignStats($campaign_ids, $date_start, $date_end);
 
-        $stats = $this->ads->getDailyReportStats($this->account_id, $data_columns, $filters, $date_start, $date_end);
         $campaign_stats = [];
-        foreach ($stats as $_stats) {
-            $campaign_stats[$_stats->campaign_id][] = $_stats;
-        }
-        foreach ($campaign_stats as &$_campaign_stats) {
-            $stats_report = new CampaignStatsReport();
-            foreach ($_campaign_stats as $stats_data) {
-                $stats = new \ebussola\ads\reports\facebook\campaignstats\CampaignStats($stats_data);
-                $stats->refreshValues();
-
-                $stats_report->addStats($stats);
+        foreach ($stats_report as $_stats) {
+            if (!isset($campaign_stats[$_stats->object_id])) {
+                $campaign_stats[$_stats->object_id] = new CampaignStatsReport();
             }
-
-            $_campaign_stats = $stats_report;
+            /** @noinspection PhpUndefinedMethodInspection */
+            $campaign_stats[$_stats->object_id]->addStats($_stats);
         }
 
         return $campaign_stats;
+    }
+
+    /**
+     * @param string[]  $campaign_ids
+     * @param \DateTime $date_start
+     * @param \DateTime $date_end
+     *
+     * @return StatsReport[]
+     */
+    public function createConsolidatedDailyCampaignStats($campaign_ids, \DateTime $date_start, \DateTime $date_end) {
+        $stats_report = $this->_createDailyCampaignStats($campaign_ids, $date_start, $date_end);
+
+        $ads_reports = new Reports();
+        $ads_reports->groupBy('date', $stats_report);
+
+        return $stats_report;
     }
 
     /**
@@ -100,6 +106,33 @@ class Facebook {
 
     private function getAdFields() {
         return array_merge(array('adgroup_id', 'adgroup_name'), $this->getGeneralFields());
+    }
+
+    /**
+     * @param           $campaign_ids
+     * @param \DateTime $date_start
+     * @param \DateTime $date_end
+     * @param           $stats_data
+     *
+     * @return array
+     */
+    private function _createDailyCampaignStats($campaign_ids, \DateTime $date_start, \DateTime $date_end) {
+        $data_columns = $this->getCampaignFields();
+        $filters = array(
+            ReportStatsHelper::createFilter('campaign_id', 'in', $campaign_ids)
+        );
+
+        $stats = $this->ads->getDailyReportStats($this->account_id, $data_columns, $filters, $date_start, $date_end);
+
+        $stats_report = new CampaignStatsReport();
+        foreach ($stats as $stats_data) {
+            $stats = new \ebussola\ads\reports\facebook\campaignstats\CampaignStats($stats_data);
+            $stats->refreshValues();
+
+            $stats_report->addStats($stats);
+        }
+
+        return $stats_report;
     }
 
 }

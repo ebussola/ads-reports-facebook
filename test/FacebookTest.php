@@ -45,6 +45,19 @@ class FacebookTest extends PHPUnit_Framework_TestCase {
         }
     }
 
+    public function testCreateConsolidatedDailyCampaignStats() {
+        $config = include __DIR__ . '/config.php';
+
+        $campaigns = $this->ads->getAdSetsFromAccount($config['account_id']);
+        $campaign_ids = \ebussola\facebook\ads\adcampaign\AdCampaignHelper::extractIds($campaigns);
+
+        $daily_campaign_reports = $this->facebook->createConsolidatedDailyCampaignStats($campaign_ids, new DateTime('-30 days'), new DateTime('today'));
+        $this->assertInstanceOf('\ebussola\ads\reports\facebook\campaignstats\CampaignStatsReport', $daily_campaign_reports);
+        foreach ($daily_campaign_reports as $campaign_stats) {
+            $this->assertInstanceOf('\ebussola\ads\reports\facebook\CampaignStats', $campaign_stats);
+        }
+    }
+
     public function testCreateCampaignStats() {
         $config = include __DIR__ . '/config.php';
 

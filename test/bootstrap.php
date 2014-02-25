@@ -8,3 +8,4 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/AbstractCampaignStatsTest.php';
+require __DIR__ . '/../vendor/ebussola/facebook-core/test/stubs/AccessTokenData.php';

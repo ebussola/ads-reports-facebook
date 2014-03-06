@@ -8,6 +8,8 @@
 
 namespace ebussola\ads\reports\facebook;
 
+use ebussola\ads\reports\facebook\adgroupstats\AdGroupStats;
+use ebussola\ads\reports\facebook\adgroupstats\AdGroupStatsReport;
 use ebussola\ads\reports\facebook\campaignstats\CampaignStatsReport;
 use ebussola\ads\reports\Reports;
 use ebussola\ads\reports\StatsReport;
@@ -92,6 +94,87 @@ class Facebook {
         }
 
         return $stats_report;
+    }
+
+    /**
+     * @param string[]  $ad_group_ids
+     * @param \DateTime $start_date
+     * @param \DateTime $end_date
+     * @param bool      $group_similar_ads
+     *
+     * @return AdGroupStatsReport
+     */
+    public function createAdStats($ad_group_ids, \DateTime $start_date, \DateTime $end_date, $group_similar_ads) {
+        $groups = $this->ads->getAdGroups($ad_group_ids);
+
+        $creative_ids = [];
+        foreach ($groups as $group) {
+            foreach ($group->creative_ids as $creative_id) {
+                $creative_ids[] = $creative_id;
+            }
+        }
+        $creatives = $this->ads->getCreatives($creative_ids);
+
+        $data_columns = $this->getAdFields();
+        $filters = array(
+            ReportStatsHelper::createFilter('adgroup_id', 'in', $ad_group_ids)
+        );
+        $stats = $this->ads->getReportStats($this->account_id, $data_columns, $filters, $start_date, $end_date);
+
+        $this->completeGroupObj($groups, $creatives, $stats);
+
+        // build ad_stats
+        $adgroup_stats_report = new AdGroupStatsReport();
+        foreach ($groups as $group) {
+            $creative = reset($group->creatives);
+            $stats = new AdGroupStats($group->stats, $creative);
+            $stats->refreshValues();
+
+            $adgroup_stats_report->addStats($stats);
+        }
+
+        if ($group_similar_ads) {
+            $reports = new Reports(new StatsGrouper());
+            $reports->groupBy('body', $adgroup_stats_report);
+        }
+
+        return $adgroup_stats_report;
+    }
+
+    /**
+     * @deprecated
+     *
+     * @param      $groups
+     * @param      $creatives
+     * @param null $stats
+     *
+     * @return mixed
+     */
+    private function completeGroupObj($groups, $creatives, $stats=null) {
+        foreach ($groups as $group) {
+            $group->creatives = [];
+            foreach ($group->creative_ids as $creative_id) {
+                foreach ($creatives as $creative) {
+                    if ($creative->id == $creative_id) {
+                        $group->creatives[] = $creative;
+                    }
+                }
+            }
+        }
+
+        if ($stats != null) {
+            foreach ($groups as $group) {
+                $group->stats = null;
+                foreach ($stats as $_stats) {
+                    if ($_stats->adgroup_id == $group->id) {
+                        $group->stats = $_stats;
+                        continue;
+                    }
+                }
+            }
+        }
+
+        return $groups;
     }
 
     private function getGeneralFields() {

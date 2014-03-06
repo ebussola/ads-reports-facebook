@@ -6,7 +6,7 @@
  * Time: 14:43
  */
 
-class CampaignStatsReportTest extends AbstractCampaignStatsTest {
+class StatsReportTest extends AbstractStatsTest {
 
     public function testAddStats() {
         $campaign_stats_report = new \ebussola\ads\reports\facebook\campaignstats\CampaignStatsReport();

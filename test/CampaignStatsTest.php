@@ -6,7 +6,7 @@
  * Time: 11:38
  */
 
-class CampaignStatsTest extends AbstractCampaignStatsTest {
+class StatsTest extends AbstractStatsTest {
     
     public function testMerge() {
         $campaign_stats1 = new \ebussola\ads\reports\facebook\campaignstats\CampaignStats($this->genCampaignStats());

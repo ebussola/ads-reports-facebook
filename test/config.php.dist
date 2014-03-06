@@ -1,0 +1,15 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: Leonardo Shinagawa
+ * Date: 24/02/14
+ * Time: 16:12
+ */
+
+return array(
+    'app_id' => '',
+    'secret' => '',
+    'redirect_uri' => '',
+    'account_id' => '',
+    'long_access_token' => ''
+);

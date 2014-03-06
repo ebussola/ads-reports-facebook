@@ -70,7 +70,7 @@ abstract class AbstractStats extends \ebussola\ads\reports\stats\Stats implement
         parent::merge($stats);
     }
 
-    private function findActionIndex($actions, $action_type) {
+    protected function findActionIndex($actions, $action_type) {
         foreach ($actions as $i => $action) {
             if ($action->action_type == $action_type) {
                 return $i;

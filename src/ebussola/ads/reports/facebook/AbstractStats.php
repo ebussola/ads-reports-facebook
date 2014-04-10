@@ -72,7 +72,7 @@ abstract class AbstractStats extends \ebussola\ads\reports\stats\Stats implement
 
     protected function findActionIndex($actions, $action_type) {
         foreach ($actions as $i => $action) {
-            if ($action->action_type == $action_type) {
+            if (isset($action->action_type) && $action->action_type == $action_type) {
                 return $i;
             }
         }
